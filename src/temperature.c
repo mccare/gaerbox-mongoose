@@ -2,6 +2,7 @@
 #include "mgos_i2c.h"
 #include "mgos_sht30.h"
 #include <math.h>
+#include "mgos_rpc.h"
 
 static struct mgos_sht30 *s_sht30;
 static struct mgos_i2c *i2c;
@@ -32,6 +33,17 @@ static void temperature_handler(struct mg_connection *c, int ev, void *p,
     (void)user_data;
 }
 
+static void temperature_cb(struct mg_rpc_request_info *ri, void *cb_arg,
+                           struct mg_rpc_frame_info *fi, struct mg_str args)
+{
+
+    float temperature = mgos_sht30_getTemperature(s_sht30);
+    mg_rpc_send_responsef(ri, "{ temperature: %.2f, targetTemperature: %d, heating: %d}", temperature, mgos_sys_config_get_app_target_temperature(), heating);
+    (void)cb_arg;
+    (void)fi;
+}
+
+// Somewhere in init function, register the handler:
 static void temperature_timer_cb(void *arg)
 {
     float temperature = mgos_sht30_getTemperature(s_sht30);
@@ -62,6 +74,7 @@ bool temperature_init()
     mgos_register_http_endpoint("/temperature", temperature_handler, NULL);
     mgos_set_timer(3000 /* ms */, MGOS_TIMER_REPEAT, temperature_timer_cb, NULL);
     mgos_gpio_setup_output(mgos_sys_config_get_app_relay_pin(), false);
+    mg_rpc_add_handler(mgos_rpc_get_global(), "Temperature", "", temperature_cb, NULL);
 
     i2c = mgos_i2c_get_bus(0);
     if (!i2c)

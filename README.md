@@ -29,3 +29,5 @@ Setting the maximum temperature delta is also configurable through mos config or
 - link will report current temperature, humdity, target temp and heating status
 - see mos.yaml for more configuration options
 - The grove ports need their power turned on, that is why you need to set the power GPIO pin of the board to 1 (true).
+- Created RPC call Temperature, which can be called with ` mos --port ws://192.168.178.37/rpc call Temperature`. It will respond with a JSON
+- need ca-bundle lib if you want mdash to be bel to connect
